@@ -1,0 +1,14 @@
+{
+  "name": "Go Echo Dev Container",
+  "dockerComposeFile": "../docker-compose.yaml",
+  "service": "web",
+  "workspaceFolder": "/app",
+  "extensions": [
+    "golang.go",
+    "ms-azuretools.vscode-docker"
+  ],
+  "settings": {
+    "go.gopath": "/go"
+  },
+  "postCreateCommand": "go mod tidy"
+}

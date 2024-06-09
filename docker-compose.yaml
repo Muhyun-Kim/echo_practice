@@ -1,0 +1,34 @@
+version: "3.8"
+
+services:
+  web:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - .:/app
+      - air_conf:/root/.air.toml
+    depends_on:
+      - db
+    environment:
+      MYSQL_USER: echo_user
+      MYSQL_PASSWORD: echo_pw
+      MYSQL_HOST: db
+      MYSQL_PORT: 3306
+      MYSQL_DB: echo_db
+
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root_pw
+      MYSQL_DATABASE: echo_db
+      MYSQL_USER: echo_user
+      MYSQL_PASSWORD: echo_pw
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+volumes:
+  air_conf:
+  mysql_data:
