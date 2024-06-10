@@ -1,21 +1,29 @@
 package main
 
 import (
+	"log"
 	"my-echo-app/database"
 	"my-echo-app/routes"
 
+	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
-    e := echo.New()
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatalf("Error loading .env file: %v", err)
+	}
 
-    // 데이터베이스 연결
-    database.Connect()
+	e := echo.New()
 
-    // 라우트 설정
-    routes.RegisterRoutes(e)
+	e.Use(middleware.Logger())
+	e.Use(middleware.Recover())
 
-    // 서버 시작
-    e.Logger.Fatal(e.Start(":8080"))
+	database.Connect()
+
+	routes.RegisterRoutes(e)
+
+	e.Logger.Fatal(e.Start(":8080"))
 }
