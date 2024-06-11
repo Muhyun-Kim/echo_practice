@@ -4,25 +4,15 @@ import (
 	"my-echo-app/database"
 	"my-echo-app/models"
 	"net/http"
-	"os"
-	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-
+	"github.com/gorilla/sessions"
 	"github.com/labstack/echo/v4"
 	"golang.org/x/crypto/bcrypt"
 )
 
-var jwtKey = []byte(os.Getenv("JWT_SECRET"))
-
 type LoginRequest struct {
 	Email    string `json:"email" validate:"required,email"`
 	Password string `json:"password" validate:"required"`
-}
-
-type Claims struct {
-	Email string `json:"email"`
-	jwt.RegisteredClaims
 }
 
 func HashPassword(password string) (string, error) {
@@ -35,19 +25,6 @@ func CheckPasswordHash(password, hash string) bool {
 	return err == nil
 }
 
-func GenerateJWT(email string) (string, error) {
-	expirationTime := time.Now().Add(24 * time.Hour)
-	claims := &Claims{
-		Email: email,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString(jwtKey)
-}
-
 func CreateAccount(c echo.Context) error {
 	user := new(models.User)
 
@@ -58,7 +35,6 @@ func CreateAccount(c echo.Context) error {
 	}
 
 	hashedPassword, err := HashPassword(user.Password)
-
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"error": "Failed to hash password",
@@ -79,6 +55,7 @@ func Login(c echo.Context) error {
 	loginReq := new(LoginRequest)
 
 	if err := c.Bind(loginReq); err != nil {
+		c.Logger().Error("Bind error: ", err)
 		return c.JSON(http.StatusBadRequest, map[string]string{
 			"error": "Invalid request payload",
 		})
@@ -86,6 +63,7 @@ func Login(c echo.Context) error {
 
 	var user models.User
 	if err := database.DB.Where("email = ?", loginReq.Email).First(&user).Error; err != nil {
+		c.Logger().Error("DB error: ", err)
 		return c.JSON(http.StatusUnauthorized, map[string]string{
 			"error": "Invalid email or password",
 		})
@@ -97,30 +75,30 @@ func Login(c echo.Context) error {
 		})
 	}
 
-	token, err := GenerateJWT(user.Email)
-	if err != nil {
+	session, ok := c.Get("session").(*sessions.Session)
+	if !ok || session == nil {
+		c.Logger().Error("Session error: session is nil or not a *sessions.Session")
 		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Failed to generate token",
+			"error": "Failed to get session",
+		})
+	}
+
+	session.Values["email"] = user.Email
+	err := session.Save(c.Request(), c.Response())
+	if err != nil {
+		c.Logger().Error("Session save error: ", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to save session",
 		})
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "Login successful",
-		"token":   token,
 	})
 }
 
 func GetProfile(c echo.Context) error {
-	userToken := c.Get("user")
-	if userToken == nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{
-			"error": "Missing or invalid JWT token",
-		})
-	}
-
-	user := userToken.(*jwt.Token)
-	claims := user.Claims.(jwt.MapClaims)
-	email := claims["email"].(string)
+	email := c.Get("email").(string)
 
 	var userProfile models.User
 	if err := database.DB.Where("email = ?", email).First(&userProfile).Error; err != nil {
