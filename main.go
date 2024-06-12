@@ -16,7 +16,6 @@ import (
 var store *sessions.CookieStore
 
 func init() {
-	// .env 파일 읽기
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatalf("Error loading .env file")

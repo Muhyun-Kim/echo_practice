@@ -9,10 +9,10 @@ import (
 )
 
 func RegisterRoutes(e *echo.Echo, store *sessions.CookieStore) {
-	// 비보호된 라우트
 	e.POST("/users", user_controller.CreateAccount)
 	e.POST("/user/login", user_controller.Login)
 
+	// protected routes
 	authGroup := e.Group("/user")
 	authGroup.Use(middlewarecontroller.SessionAuth(store))
 
