@@ -23,4 +23,5 @@ func RegisterRoutes(e *echo.Echo, store *sessions.CookieStore) {
 	blogGroup.Use(middlewarecontroller.SessionAuth(store))
 
 	blogGroup.POST("", blog_controller.CreateBlog)
+	blogGroup.GET("", blog_controller.GetBlogs)
 }
