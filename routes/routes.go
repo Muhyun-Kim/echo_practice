@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"my-echo-app/controllers/blog_controller"
 	middlewarecontroller "my-echo-app/controllers/middleware_controller"
 	"my-echo-app/controllers/user_controller"
 
@@ -9,7 +10,7 @@ import (
 )
 
 func RegisterRoutes(e *echo.Echo, store *sessions.CookieStore) {
-	e.POST("/users", user_controller.CreateAccount)
+	e.POST("/user", user_controller.CreateAccount)
 	e.POST("/user/login", user_controller.Login)
 
 	// protected routes
@@ -17,4 +18,9 @@ func RegisterRoutes(e *echo.Echo, store *sessions.CookieStore) {
 	authGroup.Use(middlewarecontroller.SessionAuth(store))
 
 	authGroup.GET("/profile", user_controller.GetProfile)
+
+	blogGroup := e.Group("/blog")
+	blogGroup.Use(middlewarecontroller.SessionAuth(store))
+
+	blogGroup.POST("", blog_controller.CreateBlog)
 }

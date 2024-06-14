@@ -48,7 +48,14 @@ func CreateAccount(c echo.Context) error {
 			"error": "Failed to create user",
 		})
 	}
-	return c.JSON(http.StatusCreated, user)
+
+	userDTO := models.UserDTO{
+		ID:       user.ID,
+		Username: user.Username,
+		Email:    user.Email,
+	}
+
+	return c.JSON(http.StatusCreated, userDTO)
 }
 
 func Login(c echo.Context) error {

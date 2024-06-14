@@ -3,6 +3,7 @@ package database
 import (
 	"fmt"
 	"log"
+	"my-echo-app/models"
 	"os"
 
 	"gorm.io/driver/mysql"
@@ -22,6 +23,11 @@ func Connect() {
 	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Could not connect to the database: %v", err)
+	}
+
+	err = db.AutoMigrate(&models.User{}, &models.Blog{}, &models.BlogComment{})
+	if err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
 	}
 
 	DB = db

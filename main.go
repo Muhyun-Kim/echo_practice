@@ -21,7 +21,6 @@ func init() {
 		log.Fatalf("Error loading .env file")
 	}
 
-	// 환경 변수에서 해시 키와 암호화 키 가져오기
 	hashKey := []byte(os.Getenv("SESSION_HASH_KEY"))
 	blockKey := []byte(os.Getenv("SESSION_BLOCK_KEY"))
 
