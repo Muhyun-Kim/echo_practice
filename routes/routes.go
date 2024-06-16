@@ -24,4 +24,5 @@ func RegisterRoutes(e *echo.Echo, store *sessions.CookieStore) {
 
 	blogGroup.POST("", blog_controller.CreateBlog)
 	blogGroup.GET("", blog_controller.GetBlogs)
+	blogGroup.DELETE("/:id", blog_controller.DeleteBlog)
 }

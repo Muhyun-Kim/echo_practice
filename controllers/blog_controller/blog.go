@@ -4,6 +4,7 @@ import (
 	"my-echo-app/database"
 	"my-echo-app/models"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -83,4 +84,33 @@ func GetBlogs(c echo.Context) error {
 		blogDTOs = append(blogDTOs, blogDTO)
 	}
 	return c.JSON(http.StatusOK, blogDTOs)
+}
+
+func DeleteBlog(c echo.Context) error {
+	id := c.Param("id")
+
+	blogID, err := strconv.Atoi(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid blog ID",
+		})
+	}
+
+	blog := models.Blog{}
+	if err := database.DB.First(&blog, blogID).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Blog not found",
+		})
+	}
+
+	if err := database.DB.Delete(&blog).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to delete blog",
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Blog deleted successfully",
+	})
+
 }
