@@ -10,8 +10,10 @@ import (
 )
 
 func RegisterRoutes(e *echo.Echo, store *sessions.CookieStore) {
+
 	e.POST("/user", user_controller.CreateAccount)
 	e.POST("/user/login", user_controller.Login)
+	e.POST("/user/logout", user_controller.Logout)
 
 	// protected routes
 	authGroup := e.Group("/user")
@@ -25,4 +27,5 @@ func RegisterRoutes(e *echo.Echo, store *sessions.CookieStore) {
 	blogGroup.POST("", blog_controller.CreateBlog)
 	blogGroup.GET("", blog_controller.GetBlogs)
 	blogGroup.DELETE("/:id", blog_controller.DeleteBlog)
+	blogGroup.PUT("/:id", blog_controller.UpdateBlog)
 }

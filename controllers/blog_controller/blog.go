@@ -1,6 +1,8 @@
 package blog_controller
 
 import (
+	"log"
+	"my-echo-app/controllers/user_controller"
 	"my-echo-app/database"
 	"my-echo-app/models"
 	"net/http"
@@ -113,4 +115,59 @@ func DeleteBlog(c echo.Context) error {
 		"message": "Blog deleted successfully",
 	})
 
+}
+
+func UpdateBlog(c echo.Context) error {
+	id := c.Param("id")
+
+	blogID, err := strconv.Atoi(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid blog ID",
+		})
+	}
+
+	blog := models.Blog{}
+	if err := database.DB.First(&blog, blogID).Error; err != nil {
+		return c.JSON(http.StatusNotFound, map[string]string{
+			"error": "Blog not found",
+		})
+	}
+
+	user, err := user_controller.GetUserFromSession(c)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, map[string]string{
+			"error": "Unauthorized",
+		})
+	}
+
+	if user.ID != blog.AuthorID {
+		return c.JSON(http.StatusForbidden, map[string]string{
+			"error": "You are not allowed to update this blog",
+		})
+	}
+
+	updateData := struct {
+		Title   string `json:"title"`
+		Content string `json:"content"`
+	}{}
+	if err := c.Bind(&updateData); err != nil {
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"error": "Invalid request payload",
+		})
+	}
+	log.Println(updateData)
+
+	blog.Title = updateData.Title
+	blog.Content = updateData.Content
+
+	if err := database.DB.Save(&blog).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to update blog",
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"message": "Blog updated successfully",
+	})
 }

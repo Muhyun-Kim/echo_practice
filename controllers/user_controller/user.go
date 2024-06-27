@@ -91,6 +91,7 @@ func Login(c echo.Context) error {
 	}
 
 	session.Values["email"] = user.Email
+
 	err := session.Save(c.Request(), c.Response())
 	if err != nil {
 		c.Logger().Error("Session save error: ", err)
@@ -101,6 +102,29 @@ func Login(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
 		"message": "Login successful",
+	})
+}
+
+func Logout(c echo.Context) error {
+	sessions, ok := c.Get("session").(*sessions.Session)
+	if !ok || sessions == nil {
+		c.Logger().Error("Session error: session is nil or not a *sessions.Session")
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to get session",
+		})
+	}
+
+	sessions.Options.MaxAge = -1
+	err := sessions.Save(c.Request(), c.Response())
+	if err != nil {
+		c.Logger().Error("Session save error: ", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to invalidate session",
+		})
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"message": "Logout successful",
 	})
 }
 
@@ -115,4 +139,23 @@ func GetProfile(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, userProfile)
+}
+
+func GetUserFromSession(c echo.Context) (*models.User, error) {
+	session, ok := c.Get("session").(*sessions.Session)
+	if !ok || session == nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get session")
+	}
+
+	email, ok := session.Values["email"].(string)
+	if !ok || email == "" {
+		return nil, echo.NewHTTPError(http.StatusUnauthorized, "User not logged in")
+	}
+
+	var user models.User
+	if err := database.DB.Where("email = ?", email).First(&user).Error; err != nil {
+		return nil, echo.NewHTTPError(http.StatusInternalServerError, "Failed to get user from database")
+	}
+
+	return &user, nil
 }
