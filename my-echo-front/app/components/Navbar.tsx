@@ -3,18 +3,28 @@
 import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { getLoginState } from '../lib/getLoginState';
+import { deleteSession, getSession } from '../lib/session';
+import { useRouter } from 'next/navigation';
 
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
   useEffect(() => {
     async function loginState() {
-      const session = await getLoginState();
-      setIsLoggedIn(session);
+      const session = await getSession();
+      if (session) {
+        setIsLoggedIn(true);
+      } else {
+        setIsLoggedIn(false);
+      }
     }
     loginState();
   }, []);
 
+  const handleLogout = async () => {
+    await deleteSession();
+    router.push('/login');
+  };
   return (
     <AppBar position="static">
       <Toolbar sx={{ justifyContent: 'space-between' }}>
@@ -28,9 +38,9 @@ export default function Navbar() {
         >
           {isLoggedIn ? (
             <li>
-              <Link href="/logout" passHref>
-                <Button color="inherit">logout</Button>
-              </Link>
+              <Button color="inherit" type="button" onClick={handleLogout}>
+                logout
+              </Button>
             </li>
           ) : (
             // logout state
