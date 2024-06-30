@@ -137,8 +137,13 @@ func GetProfile(c echo.Context) error {
 			"error": "Failed to fetch user profile",
 		})
 	}
+	userDTO := models.UserDTO{
+		ID:       userProfile.ID,
+		Username: userProfile.Username,
+		Email:    userProfile.Email,
+	}
 
-	return c.JSON(http.StatusOK, userProfile)
+	return c.JSON(http.StatusOK, userDTO)
 }
 
 func GetUserFromSession(c echo.Context) (*models.User, error) {
