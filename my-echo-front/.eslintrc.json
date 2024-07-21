@@ -14,7 +14,9 @@
     "react-hooks",
     "jsx-a11y",
     "@typescript-eslint",
-    "tailwindcss"
+    "tailwindcss",
+    "unused-imports",
+    "prettier"
   ],
   "rules": {
     "semi": ["error", "always"],
